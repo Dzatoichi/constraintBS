@@ -11,5 +11,7 @@ __pycache__/
 .ruff_cache/
 .mypy_cache/
 
+tests/
+
 # macOS
 .DS_Store

@@ -3,6 +3,7 @@ from sqlalchemy import text
 from fastapi import Depends, FastAPI
 
 from app.hotels.hotel_router import hotel_router
+from app.hotels.rooms.rooms_router import rooms_router
 from app.shared.database import DatabaseHelper
 
 app = FastAPI(
@@ -11,6 +12,7 @@ app = FastAPI(
 )
 
 app.include_router(hotel_router)
+app.include_router(rooms_router)
 
 
 @app.get("/health")

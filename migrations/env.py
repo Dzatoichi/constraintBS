@@ -13,6 +13,8 @@ from app.shared.database import Base
 
 from app.hotels.hotel_model import Hotel
 
+from app.hotels.rooms.rooms_model import Room, Amenity, room_amenity_association
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

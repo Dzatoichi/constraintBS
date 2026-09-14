@@ -86,3 +86,24 @@ async def update_hotel(
     hotel = await hotel_service.update_hotel(session=session, hotel_id=hotel_id, data=data)
 
     return HotelUpdateResponse.model_validate(hotel)
+
+
+@hotel_router.delete(
+     path="/{hotel_id}",
+     response_model=None,
+     summary="Удаление отеля",
+)
+async def delete_hotel(
+     hotel_id: int,
+     session: AsyncSessionDep,
+     hotel_service: HotelServiceDep,
+) -> None:
+     """
+     Удаление отеля
+     """
+     result = await hotel_service.delete_hotel(
+          session=session,
+          hotel_id=hotel_id,
+          )
+
+     return result

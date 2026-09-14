@@ -4,15 +4,12 @@ from typing import Annotated
 
 from fastapi import Depends
 
-from app.hotels.hotel_repository import HotelRepository
-from app.shared.database import DatabaseHelper
-
-from app.hotels.hotel_service import HotelService
+from app.shared.database import db_helper
 
 
 
 AsyncSessionDep = Annotated[
     AsyncSession, 
-    Depends(DatabaseHelper.session_getter)
+    Depends(db_helper.session_getter)
 ]
 

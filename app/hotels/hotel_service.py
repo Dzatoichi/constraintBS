@@ -83,3 +83,27 @@ class HotelService:
          await session.refresh(updated_hotel)
 
          return updated_hotel
+
+    async def delete_hotel(
+            self,
+            hotel_id: int,
+            session: AsyncSession,
+    ) -> None:
+        """
+        Удаления отеля
+        """
+        del_hotel = await self.hotel_repository.get_by_id(
+            obj_id=hotel_id,
+            session=session,
+        )
+
+        if del_hotel is None:
+            raise ValueError("Hotel not found")
+
+        result = await self.hotel_repository.delete(
+            obj=del_hotel,
+            session=session,
+        )
+        await session.commit()
+
+        return result

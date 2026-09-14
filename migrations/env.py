@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from app.shared.config import settings
+
 from app.shared.database import Base
 
 from app.hotels.hotel_model import Hotel

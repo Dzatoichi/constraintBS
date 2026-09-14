@@ -27,4 +27,4 @@ class DatabaseHelper:
             yield session
 
 
-
+db_helper = DatabaseHelper()

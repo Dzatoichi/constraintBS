@@ -1,11 +1,10 @@
+from datetime import date
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.hotels.rooms.rooms_model import Room, RoomType
 from app.hotels.rooms.rooms_repository import RoomRepository
-
-from app.hotels.rooms.rooms_model import Room
-
 from app.hotels.rooms.rooms_schemas import RoomCreate, RoomUpdate
-
 
 
 class RoomsService:
@@ -121,4 +120,40 @@ class RoomsService:
         await session.refresh(updated_room)
 
         return updated_room 
+
+
+    async def search_rooms(
+            self,
+            session: AsyncSession,
+            city: str,
+            check_in: date,
+            check_out: date,
+            guests: int,
+            max_price: int | None,
+            room_type: RoomType | None,
+            amenities: list[int] | None,
+    ) -> list[Room] | None:
+        """
+        Поиск номеров по параметрам
+        """
+        if check_in >= check_out:
+            raise ValueError("check_in must be before check_out")
+
+        rooms = await self.rooms_repository.search_rooms(
+            session=session,
+            city=city,
+            check_in=check_in,
+            check_out=check_out,
+            guests=guests,
+            max_price=max_price,
+            room_type=room_type,
+            amenities=amenities,
+        )
+
+        if rooms is None:
+            raise ValueError("Not found")
+
+        return rooms
+
+
         

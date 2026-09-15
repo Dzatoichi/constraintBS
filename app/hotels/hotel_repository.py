@@ -1,10 +1,9 @@
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.hotels.hotel_model import Hotel
 from app.hotels.hotel_schemas import HotelCreate, HotelUpdate
 from app.shared.repository import BaseRepository
-
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class HotelRepository(BaseRepository[

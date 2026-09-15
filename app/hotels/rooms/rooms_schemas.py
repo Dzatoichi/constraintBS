@@ -1,8 +1,8 @@
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.hotels.rooms.rooms_model import RoomType
-
-from datetime import datetime
 
 
 class AmentityCreate(BaseModel):
@@ -45,7 +45,7 @@ class RoomUpdate(BaseModel):
     price_per_night: int | None
     floor: int | None
     description: str | None = Field(default=None, max_length=500)
-    amentity: list[int] | None
+    amenities: list[int] | None
 
 
 class RoomUpdateRead(RoomUpdate):

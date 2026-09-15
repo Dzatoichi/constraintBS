@@ -2,8 +2,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.hotels.hotel_model import Hotel
 from app.hotels.hotel_repository import HotelRepository
-
 from app.hotels.hotel_schemas import HotelCreate, HotelUpdate
+
 
 class HotelService:
     def __init__(self, hotel_repository: HotelRepository):

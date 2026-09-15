@@ -5,6 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.shared.database import Base
 
+
 class RoomType(enum.Enum):
     STANDART = "standart"
     DELUXE = "deluxe"
@@ -19,6 +20,7 @@ room_amenity_association = Table(
 
 class Room(Base):
     __tablename__ = "rooms"
+
     id: Mapped[int] = mapped_column(primary_key=True,)
     number: Mapped[str] = mapped_column(String(10), nullable=False)
     room_type: Mapped[RoomType] = mapped_column(Enum(RoomType), default=RoomType.STANDART)
@@ -26,7 +28,9 @@ class Room(Base):
     price_per_night: Mapped[int] = mapped_column(Integer, nullable=False)
     floor: Mapped[int] = mapped_column(Integer, nullable=False)
     description: Mapped[str | None] = mapped_column(String(500))
+
     hotel_id: Mapped[int] = mapped_column(ForeignKey("hotels.id"))
+    
     amenities = relationship("Amenity", secondary=room_amenity_association, back_populates="rooms", lazy="selectin",)
 
 class Amenity(Base):

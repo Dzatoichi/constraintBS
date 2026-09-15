@@ -1,6 +1,7 @@
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, Field
 
-from datetime import datetime
 
 class HotelCreate(BaseModel):
     name: str = Field(min_length=3, max_length=30)

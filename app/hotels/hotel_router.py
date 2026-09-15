@@ -1,10 +1,13 @@
 from fastapi import APIRouter
 
-from app.hotels.hotel_schemas import HotelCreateResponse, HotelUpdateResponse, HotelCreate, HotelUpdate
-
-from app.shared.dependecies import AsyncSessionDep
-
 from app.hotels.dependencies import HotelServiceDep
+from app.hotels.hotel_schemas import (
+    HotelCreate,
+    HotelCreateResponse,
+    HotelUpdate,
+    HotelUpdateResponse,
+)
+from app.shared.dependecies import AsyncSessionDep
 
 hotel_router = APIRouter(
     prefix="/hotels",

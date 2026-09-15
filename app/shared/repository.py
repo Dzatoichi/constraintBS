@@ -1,22 +1,13 @@
-from typing import Generic, TypeVar
-
 from pydantic import BaseModel
-
-from .database import Base
-
 from sqlalchemy import select
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
-ModelType = TypeVar("ModelType", bound=Base)
-CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
-UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
-class BaseRepository(Generic[
+class BaseRepository[
     ModelType,
-    CreateSchemaType,
-    UpdateSchemaType,
-    ]):
+    CreateSchemaType: BaseModel,
+    UpdateSchemaType: BaseModel,
+    ]:
 
     def __init__(
             self, 

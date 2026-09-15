@@ -1,9 +1,10 @@
-from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine, AsyncSession
-
 from collections.abc import AsyncGenerator
 
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase
+
 from app.shared.config import settings
+
 
 class Base(DeclarativeBase):
     pass
@@ -22,7 +23,7 @@ class DatabaseHelper:
 
     async def session_getter(
             self,
-        ) -> AsyncGenerator[AsyncSession, None]:
+        ) -> AsyncGenerator[AsyncSession]:
         async with self.session_factory() as session:
             yield session
 

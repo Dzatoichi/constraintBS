@@ -1,15 +1,85 @@
-from fastapi import APIRouter
+from datetime import date
+from typing import Annotated
 
-from app.hotels.rooms.rooms_schemas import RoomRead, RoomCreate, RoomUpdate, RoomUpdateRead
+from fastapi import APIRouter, Query
 
 from app.hotels.dependencies import RoomServiceDep
-
+from app.hotels.rooms.rooms_model import RoomType
+from app.hotels.rooms.rooms_schemas import (
+    RoomCreate,
+    RoomRead,
+    RoomUpdate,
+    RoomUpdateRead,
+)
 from app.shared.dependecies import AsyncSessionDep
-
 
 rooms_router = APIRouter(
     tags=["Номера"]
 )
+
+
+@rooms_router.get(
+    path="/rooms/search",
+    response_model=list[RoomRead],
+    summary="Поиск номеров по параметрам"
+)
+async def search_rooms(
+    session: AsyncSessionDep,
+    rooms_service: RoomServiceDep,
+    city: Annotated[
+        str, 
+        Query(
+            description="Город, в котором нужен номер", 
+            max_lenght=20
+            )],
+    check_in: Annotated[
+        date, 
+        Query(
+            description="Дата заселения YYYY-MM-DD"
+            )],
+    check_out: Annotated[
+        date, 
+        Query(
+            description="Дата выселения YYYY-MM-DD"
+            )],
+    guests: Annotated[
+        int, 
+        Query(
+            description="Кол-во гостей"
+            )],
+    max_price: Annotated[
+        int,
+        Query(
+            description="Максимальная стоимость номера в сутки"
+            )] | None = None,
+    room_type: Annotated[
+        RoomType, 
+        Query(
+            description="Тип номера"
+            )] | None = RoomType.STANDART,
+    amenities: Annotated[
+        list[int], 
+        Query(
+            description="Список id удобств, включенных в номер"
+            )] | None = None,
+) -> list[RoomRead] | None:
+    """
+    Поиск номеров по параметрам
+    """
+    rooms = await rooms_service.search_rooms(
+        session=session,
+        city=city,
+        check_in=check_in,
+        check_out=check_out,
+        guests=guests,
+        max_price=max_price,
+        room_type=room_type,
+        amenities=amenities,
+    )
+
+    if rooms is not None:
+        return [RoomRead.model_validate(room) for room in rooms]
+
 
 @rooms_router.post(
     path="/hotels/{hotel_id}/rooms",

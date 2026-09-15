@@ -1,10 +1,10 @@
-from app.shared.database import Base
+from datetime import datetime
 
+from sqlalchemy import DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from sqlalchemy import String, DateTime, func
+from app.shared.database import Base
 
-from datetime import datetime
 
 class Hotel(Base):
     __tablename__ = "hotels"

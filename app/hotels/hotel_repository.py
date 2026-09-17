@@ -2,14 +2,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.hotels.hotel_model import Hotel
-from app.hotels.hotel_schemas import HotelCreate, HotelUpdate
 from app.shared.repository import BaseRepository
 
 
 class HotelRepository(BaseRepository[
     Hotel,
-    HotelCreate,
-    HotelUpdate,
     ]):
 
     def __init__(self) -> None:

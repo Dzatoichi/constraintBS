@@ -6,14 +6,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.bookings.booking_model import Booking, BookingStatus
 from app.hotels.hotel_model import Hotel
 from app.hotels.rooms.rooms_model import Room, RoomType
-from app.hotels.rooms.rooms_schemas import RoomCreate, RoomUpdate
+from app.hotels.rooms.rooms_schemas import RoomCreate
 from app.shared.repository import BaseRepository
 
 
 class RoomRepository(BaseRepository[
     Room,
-    RoomCreate,
-    RoomUpdate,
 ]):
     def __init__(self) -> None:
         super().__init__(Room)
@@ -48,6 +46,8 @@ class RoomRepository(BaseRepository[
         rooms = await session.execute(stmt)
 
         return list(rooms.scalars().all())
+        
+        
 
 
     async def search_rooms(

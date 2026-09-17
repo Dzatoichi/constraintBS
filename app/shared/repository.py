@@ -1,12 +1,11 @@
-from pydantic import BaseModel
+from typing import Any
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class BaseRepository[
     ModelType,
-    CreateSchemaType: BaseModel,
-    UpdateSchemaType: BaseModel,
     ]:
 
     def __init__(
@@ -18,12 +17,12 @@ class BaseRepository[
     async def create(
             self,
             session: AsyncSession,
-            data: CreateSchemaType
+            payload: dict[str, Any],
     ) -> ModelType | None:
         """
         Создание записи
         """
-        obj = self.model(**data.model_dump())
+        obj = self.model(**payload)
 
         session.add(obj)
         await session.flush()
@@ -69,13 +68,9 @@ class BaseRepository[
             self,
             session: AsyncSession,
             obj: ModelType,
-            data: UpdateSchemaType,
+            update_payload: dict[str, Any],
     ) -> ModelType:
-        update_data = data.model_dump(
-            exclude_unset=True
-        )
-
-        for field, value in update_data.items():
+        for field, value in update_payload.items():
             setattr(obj, field, value)
 
         await session.flush()

@@ -21,10 +21,30 @@ class BookingService:
         """
         Создание бронирования
         """
+        await self.booking_repository.validate_booking(
+               session=session,
+               room_id=data.room_id,
+               check_in=data.check_in,
+               check_out=data.check_out,
+               guests=data.guests
+               )
+
+        total_price = await self.booking_repository.calculate_total_price(
+               session=session,
+               room_id=data.room_id,
+               check_in=data.check_in,
+               check_out=data.check_out,
+               )
+               
+        payload = data.model_dump()
+
+        payload["total_price"] = total_price
+
         booking = await self.booking_repository.create(
-            data=data,
+            payload=payload,
             session=session,
         )
+
         await session.commit()
         await session.refresh(booking)
 

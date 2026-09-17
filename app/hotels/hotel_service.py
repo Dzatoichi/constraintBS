@@ -17,9 +17,11 @@ class HotelService:
          """
          Создание отеля
          """
+         payload = data.model_dump()
+
          hotel = await self.hotel_repository.create(
              session = session,
-             data = data,
+             payload = payload,
         )
          await session.commit()
          await session.refresh(hotel)
@@ -74,8 +76,10 @@ class HotelService:
          if hotel is None:
             raise ValueError("Hotel not found")
 
+         update_payload = data.model_dump()
+
          updated_hotel = await self.hotel_repository.update(
-              data = data,
+              update_payload = update_payload,
               obj = hotel,
               session = session,
          )

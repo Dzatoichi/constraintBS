@@ -14,6 +14,7 @@ class BookingCreate(BaseModel):
 
 class BookingRead(BookingCreate):
     id: int
+    total_price: int
     created_at: datetime = Field(default_factory=datetime.now)
 
     model_config = ConfigDict(

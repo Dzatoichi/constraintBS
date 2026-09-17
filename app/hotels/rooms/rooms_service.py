@@ -111,8 +111,10 @@ class RoomsService:
         if room is None:
             raise ValueError("Room not found")
 
+        upd_payload = data.model_dump()
+
         updated_room = await self.rooms_repository.update(
-            data=data,
+            update_payload=upd_payload,
             obj = room,
             session=session,
         )

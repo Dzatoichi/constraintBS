@@ -1,8 +1,10 @@
+from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bookings.booking_model import Booking
 from app.bookings.booking_repository import BookingRepository
 from app.bookings.booking_schemas import BookingCreate
+from app.users.users_model import User
 
 
 class BookingService:
@@ -17,6 +19,7 @@ class BookingService:
             self,
             session: AsyncSession,
             data: BookingCreate,
+            user: User,
     ) -> Booking | None:
         """
         Создание бронирования
@@ -39,6 +42,9 @@ class BookingService:
         payload = data.model_dump()
 
         payload["total_price"] = total_price
+        payload["user_id"] = user.id
+        payload["guest_name"] = user.full_name or user.username
+        payload["guest_email"] = user.email
 
         booking = await self.booking_repository.create(
             payload=payload,
@@ -55,7 +61,7 @@ class BookingService:
                 self,
                 booking_id: int,
                 session: AsyncSession,
-        ) -> Booking | None:
+        ) -> Booking:
             """
             Получение бронирования ID
             """
@@ -65,8 +71,10 @@ class BookingService:
             )
 
             if booking is None:
-                    # здесь позже своё domain exception
-                    raise ValueError("Hotel not found")
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Booking not found",
+                    )
 
             return booking
 
@@ -74,37 +82,35 @@ class BookingService:
     async def get_bookings(
                     self,
                     session: AsyncSession,
-            ) -> list[Booking] | None:
+            ) -> list[Booking]:
                 """
                 Получение бронирований
                 """
-                bookings = await self.booking_repository.get_all(
+                return await self.booking_repository.get_all(
                     session=session,
-                )
-    
-                if bookings is None:
-                        # здесь позже своё domain exception
-                        raise ValueError("Hotel not found")
-    
-                return bookings
+                ) or []
 
 
     async def cancel_booking(
                     self,
                     booking_id: int,
                     session: AsyncSession,
+                    user_id: int,
             ) -> Booking | None:
                 """
                 Получение бронирования ID
                 """
-                booking = await self.booking_repository.get_by_id(
-                    obj_id=booking_id,
+                booking = await self.booking_repository.get_by_id_and_user(
+                    booking_id=booking_id,
                     session=session,
+                    user_id=user_id,
                 )
     
                 if booking is None:
-                    # здесь позже своё domain exception
-                    raise ValueError("Hotel not found")
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Booking not found",
+                    )
 
                 cancel_booking = await self.booking_repository.cancel_booking(
                        booking=booking,

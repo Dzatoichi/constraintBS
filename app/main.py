@@ -1,8 +1,10 @@
 from fastapi import FastAPI
 
+from app.auth.auth_router import auth_router
 from app.bookings.booking_router import bookings_router
 from app.hotels.hotel_router import hotel_router
 from app.hotels.rooms.rooms_router import rooms_router
+from app.users.users_router import users_router
 
 app = FastAPI(
     title="ConstraintBS",
@@ -12,6 +14,8 @@ app = FastAPI(
 app.include_router(hotel_router)
 app.include_router(rooms_router)
 app.include_router(bookings_router)
+app.include_router(auth_router)
+app.include_router(users_router)
 
 
 @app.get("/health")

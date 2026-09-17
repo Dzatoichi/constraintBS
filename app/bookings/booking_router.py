@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from app.auth.dependencies import CurrentUserDep
 from app.bookings.booking_schemas import BookingCreate, BookingRead
 from app.bookings.dependecies import BookingServiceDep
 from app.shared.dependecies import AsyncSessionDep
@@ -18,6 +19,7 @@ async def create_booking(
     data: BookingCreate,
     session: AsyncSessionDep,
     bookings_service: BookingServiceDep,
+    current_user: CurrentUserDep,
 ) -> BookingRead:
     """
     Создание бронирования
@@ -25,6 +27,7 @@ async def create_booking(
     booking = await bookings_service.create_booking(
         session=session,
         data=data,
+        user=current_user,
     )
 
     return BookingRead.model_validate(booking)
@@ -45,7 +48,7 @@ async def get_booking(
     """
     booking = await bookings_service.get_booking(
         session=session,
-        booking_id=booking_id
+        booking_id=booking_id,
     )
 
     return BookingRead.model_validate(booking)
@@ -80,13 +83,15 @@ async def cancel_booking(
     booking_id: int,
     session: AsyncSessionDep,
     bookings_service: BookingServiceDep,
+    current_user: CurrentUserDep,
 ) -> BookingRead:
     """
     Отмена бронирования
     """
     booking = await bookings_service.cancel_booking(
         session=session,
-        booking_id=booking_id
+        booking_id=booking_id,
+        user_id=current_user.id,
     )
 
     return BookingRead.model_validate(booking)

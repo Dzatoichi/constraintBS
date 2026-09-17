@@ -14,6 +14,32 @@ class BookingRepository(BaseRepository[
     def __init__(self) -> None:
         super().__init__(Booking)
 
+    async def get_by_id_and_user(
+            self,
+            session: AsyncSession,
+            booking_id: int,
+            user_id: int,
+    ) -> Booking | None:
+        result = await session.execute(
+            select(Booking).where(
+                Booking.id == booking_id,
+                Booking.user_id == user_id,
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def get_by_user(
+            self,
+            session: AsyncSession,
+            user_id: int,
+    ) -> list[Booking]:
+        result = await session.execute(
+            select(Booking)
+            .where(Booking.user_id == user_id)
+            .order_by(Booking.created_at.desc())
+        )
+        return list(result.scalars().all())
+
     async def cancel_booking(
             self,
             booking: Booking,

@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class BookingCreate(BaseModel):
@@ -8,12 +8,11 @@ class BookingCreate(BaseModel):
     check_in: date
     check_out: date
     guests: int
-    guest_name: str
-    guest_email: EmailStr
 
 
 class BookingRead(BookingCreate):
     id: int
+    user_id: int | None
     total_price: int
     created_at: datetime = Field(default_factory=datetime.now)
 
@@ -26,6 +25,3 @@ class BookingUpdate(BaseModel):
     check_in: date | None = None
     check_out: date | None = None
     guests: int | None = None
-    guest_name: str | None = None
-    guest_email: EmailStr | None = None
-    

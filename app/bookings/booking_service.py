@@ -29,7 +29,7 @@ class BookingService:
                room_id=data.room_id,
                check_in=data.check_in,
                check_out=data.check_out,
-               guests=data.guests
+               guests=data.guests,
                )
 
         total_price = await self.booking_repository.calculate_total_price(

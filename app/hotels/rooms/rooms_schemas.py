@@ -18,7 +18,7 @@ class AmentityRead(AmentityCreate):
         )
 
 
-class RoomCreate(BaseModel):
+class RoomBase(BaseModel):
     number: str
     room_type: RoomType = Field(default=RoomType.STANDART)
     capacity: int
@@ -26,16 +26,17 @@ class RoomCreate(BaseModel):
     floor: int
     description: str | None = Field(default=None, max_length=500)
 
+class RoomCreate(RoomBase):
+    model_config = ConfigDict(extra="forbid")
+
+    amenity_ids: list[int] = Field(default_factory=list)
+
+
+class RoomRead(RoomBase):
+    id: int
     amenities: list[AmentityRead] = Field(default_factory=list)
 
-
-class RoomRead(RoomCreate):
-    id: int
-    created_at: datetime = Field(default_factory=datetime.now)
-
-    model_config = ConfigDict(
-        from_attributes=True
-        )
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RoomUpdate(BaseModel):

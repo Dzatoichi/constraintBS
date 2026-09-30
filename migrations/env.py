@@ -6,8 +6,13 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+# Import every model module so its tables are registered in Base.metadata.
+from app.bookings import booking_model  # noqa: F401
+from app.hotels import hotel_model  # noqa: F401
+from app.hotels.rooms import rooms_model  # noqa: F401
 from app.shared.config import settings
 from app.shared.database import Base
+from app.users import users_model  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

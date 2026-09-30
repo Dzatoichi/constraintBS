@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 
-from app.auth.dependencies import CurrentUserDep
+from app.auth.dependencies import AdminUserDep, CurrentUserDep
 from app.bookings.booking_schemas import BookingRead
 from app.shared.dependecies import AsyncSessionDep
 from app.users.dependencies import UsersServiceDep
@@ -86,7 +86,7 @@ async def get_user(
 async def get_users(
     session: AsyncSessionDep,
     users_service: UsersServiceDep,
-    _: CurrentUserDep,
+    _: AdminUserDep,
 ) -> list[UserRead]:
     users = await users_service.get_users(session=session)
     return [UserRead.model_validate(user) for user in users]

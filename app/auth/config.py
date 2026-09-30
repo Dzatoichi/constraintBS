@@ -16,4 +16,4 @@ class AuthSettings(BaseSettings):
     )
 
 
-settings = AuthSettings()
+settings = AuthSettings() # type: ignore

@@ -1,5 +1,6 @@
 from datetime import date
 
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.hotels.rooms.rooms_model import Room, RoomType
@@ -16,14 +17,29 @@ class RoomsService:
             session: AsyncSession,
             hotel_id: int,
             data: RoomCreate,
-    ) -> Room | None:
+    ) -> Room:
         """
         Создание комнаты
         """
+        amenities = await self.rooms_repository.get_amenities(
+            session=session,
+            amenity_ids=data.amenity_ids,
+        )
+        missing_ids = set(data.amenity_ids) - {amenity.id for amenity in amenities}
+        if missing_ids:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "message": "Unknown amenity IDs",
+                    "amenity_ids": sorted(missing_ids),
+                },
+            )
+
         room = await self.rooms_repository.create(
             session=session,
             data=data,
             hotel_id=hotel_id,
+            amenities=amenities,
         )
         await session.commit()
         await session.refresh(room)

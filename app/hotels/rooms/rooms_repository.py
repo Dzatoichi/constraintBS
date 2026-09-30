@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bookings.booking_model import Booking, BookingStatus
 from app.hotels.hotel_model import Hotel
-from app.hotels.rooms.rooms_model import Room, RoomType
+from app.hotels.rooms.rooms_model import Amenity, Room, RoomType
 from app.hotels.rooms.rooms_schemas import RoomCreate
 from app.shared.repository import BaseRepository
 
@@ -22,17 +22,35 @@ class RoomRepository(BaseRepository[
             session: AsyncSession,
             hotel_id: int,
             data: RoomCreate,
-    ) -> Room | None:
+            amenities: list[Amenity],
+    ) -> Room:
         """
         Переопределения метода create
         """
-        room = self.model(**data.model_dump(), hotel_id=hotel_id)
+        room = self.model(
+            **data.model_dump(exclude={"amenity_ids"}),
+            hotel_id=hotel_id,
+            amenities=amenities,
+        )
 
         session.add(room)
         await session.flush()
 
         return room
 
+
+    async def get_amenities(
+            self,
+            session: AsyncSession,
+            amenity_ids: list[int],
+    ) -> list[Amenity]:
+        if not amenity_ids:
+            return []
+
+        result = await session.scalars(
+            select(Amenity).where(Amenity.id.in_(set(amenity_ids)))
+        )
+        return list(result.all())
 
     async def get_rooms_by_hotel(
             self,

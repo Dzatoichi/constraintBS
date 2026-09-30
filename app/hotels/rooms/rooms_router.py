@@ -3,6 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query
 
+from app.auth.dependencies import AdminUserDep
 from app.hotels.dependencies import RoomServiceDep
 from app.hotels.rooms.rooms_model import RoomType
 from app.hotels.rooms.rooms_schemas import (
@@ -91,6 +92,7 @@ async def create_room(
     hotel_id: int,
     session: AsyncSessionDep,
     rooms_service: RoomServiceDep,
+    _: AdminUserDep,
 ) -> RoomRead:
     """
     Создание номера в отеле
@@ -162,6 +164,7 @@ async def update_room(
     data: RoomUpdate,
     session: AsyncSessionDep,
     room_service: RoomServiceDep,
+    _: AdminUserDep,
 ) -> RoomUpdateRead:
     """
     Обновление данных номера в отеле
@@ -184,6 +187,7 @@ async def delete_room(
     room_id: int,
     session: AsyncSessionDep, 
     rooms_service: RoomServiceDep,
+    _: AdminUserDep,
 ) -> None:
     """
     Удаление номера

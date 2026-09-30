@@ -8,7 +8,7 @@ class BookingCreate(BaseModel):
     check_in: date
     check_out: date
     guests: int
-
+    aminity_ids: list[int]
 
 class BookingRead(BookingCreate):
     id: int

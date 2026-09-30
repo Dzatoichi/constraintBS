@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from app.auth.dependencies import AdminUserDep
 from app.hotels.dependencies import HotelServiceDep
 from app.hotels.hotel_schemas import (
     HotelCreate,
@@ -23,6 +24,7 @@ async def create_hotel(
     data: HotelCreate,
     session: AsyncSessionDep,
     hotel_service: HotelServiceDep,
+    _: AdminUserDep,
 ) -> HotelCreateResponse:
     """
     Создание отеля
@@ -82,6 +84,7 @@ async def update_hotel(
     data: HotelUpdate,
     session: AsyncSessionDep,
     hotel_service: HotelServiceDep,
+    _: AdminUserDep,
 ) -> HotelUpdateResponse:
     """
     Обновление информации об отеле
@@ -100,6 +103,7 @@ async def delete_hotel(
      hotel_id: int,
      session: AsyncSessionDep,
      hotel_service: HotelServiceDep,
+     _: AdminUserDep,
 ) -> None:
      """
      Удаление отеля

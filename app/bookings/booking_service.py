@@ -58,9 +58,12 @@ class BookingService:
             await session.commit()
         except IntegrityError as exc:
             await session.rollback()
-            driver_error = exc.orig.__cause__
+            original_error = exc.orig
+            if original_error is None:
+                raise
+            driver_error = original_error.__cause__
             if (
-                getattr(exc.orig, "sqlstate", None) == "23P01"
+                getattr(original_error, "sqlstate", None) == "23P01"
                 and getattr(driver_error, "constraint_name", None)
                 == "bookings_no_overlap"
             ):

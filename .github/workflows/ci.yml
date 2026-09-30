@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Ruff
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.12.9"
+          python-version: "3.13"
+          enable-cache: true
+      - run: uv sync --locked --dev
+      - run: uv run --locked ruff check . --output-format github
+
+  tests:
+    name: Pytest + PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: constraintbs_test_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d constraintbs_test_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASS: postgres
+      DB_NAME: constraintbs_unit_unused
+      TEST_DATABASE_NAME: constraintbs_test_ci
+      JWT_SECRET_KEY: test-only-signing-key-not-for-production-123456789
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.12.9"
+          python-version: "3.13"
+          enable-cache: true
+      - run: uv sync --locked --dev
+      - name: Apply migrations to empty test database
+        run: uv run --locked alembic upgrade head
+        env:
+          DB_NAME: constraintbs_test_ci
+      - name: Verify latest migration rollback
+        run: uv run --locked alembic downgrade -1
+        env:
+          DB_NAME: constraintbs_test_ci
+      - name: Reapply latest migration
+        run: uv run --locked alembic upgrade head
+        env:
+          DB_NAME: constraintbs_test_ci
+      - name: Run all tests including PostgreSQL integration
+        run: uv run --locked pytest -q --junitxml=test-results.xml
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results.xml
+          if-no-files-found: ignore

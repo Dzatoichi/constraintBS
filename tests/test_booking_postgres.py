@@ -25,11 +25,15 @@ from app.shared.config import settings
 from app.shared.database import db_helper
 from app.users.users_model import User
 
+pytestmark = pytest.mark.integration
+
 
 @pytest_asyncio.fixture
 async def database():
     name = os.getenv("TEST_DATABASE_NAME")
     if not name:
+        if os.getenv("CI") == "true":
+            pytest.fail("TEST_DATABASE_NAME is required in CI")
         pytest.skip(
             "Set TEST_DATABASE_NAME to an isolated migrated PostgreSQL database"
         )
@@ -215,3 +219,96 @@ async def test_other_integrity_errors_are_not_booking_conflicts(database):
             )
         assert error.value.orig.sqlstate == "23503"
         assert await session.scalar(select(1)) == 1
+
+
+@pytest.mark.asyncio
+async def test_register_login_refresh_and_booking_ownership(database):
+    factory = async_sessionmaker(database, expire_on_commit=False)
+
+    async def session_override():
+        async with factory() as session:
+            yield session
+
+    previous = app.dependency_overrides.copy()
+    app.dependency_overrides[db_helper.session_getter] = session_override
+    try:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            # Fixture uses explicit ID 1; keep the PostgreSQL sequence in sync.
+            async with database.begin() as conn:
+                await conn.execute(
+                    text("SELECT setval(pg_get_serial_sequence('users', 'id'), 1)")
+                )
+            registration = {
+                "email": "new@example.com",
+                "username": "newuser",
+                "password": "Test-password-12345",
+            }
+            response = await client.post("/auth/register", json=registration)
+            assert response.status_code == 201
+            owner_id = response.json()["id"]
+            assert "password_hash" not in response.json()
+            assert (
+                await client.post("/auth/register", json=registration)
+            ).status_code == 409
+            login = await client.post(
+                "/auth/login",
+                data={
+                    "username": registration["email"],
+                    "password": registration["password"],
+                },
+            )
+            assert login.status_code == 200
+            tokens = login.json()
+            headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+            assert (await client.get("/auth/me", headers=headers)).json()[
+                "id"
+            ] == owner_id
+            assert (
+                await client.post(
+                    "/auth/refresh", json={"refresh_token": tokens["refresh_token"]}
+                )
+            ).status_code == 200
+            assert (
+                await client.post(
+                    "/auth/login",
+                    data={
+                        "username": registration["email"],
+                        "password": "wrong-password",
+                    },
+                )
+            ).status_code == 401
+            # An unrelated user's booking must not appear in /users/me/bookings.
+            async with database.begin() as conn:
+                await conn.execute(
+                    insert(Booking.__table__).values(**booking(room_id=2))
+                )
+            payload = {
+                "room_id": 1,
+                "check_in": "2026-10-01",
+                "check_out": "2026-10-03",
+                "guests": 1,
+            }
+            created = await client.post("/bookings", json=payload, headers=headers)
+            assert created.status_code == 200
+            own_booking = created.json()
+            assert own_booking["total_price"] == 2000
+            assert own_booking["user_id"] == owner_id
+            own_list = await client.get("/users/me/bookings", headers=headers)
+            assert own_list.status_code == 200
+            assert [item["id"] for item in own_list.json()] == [own_booking["id"]]
+            assert (
+                await client.patch("/bookings/1/cancel", headers=headers)
+            ).status_code == 404
+            assert (
+                await client.patch(
+                    f"/bookings/{own_booking['id']}/cancel", headers=headers
+                )
+            ).status_code == 200
+            assert (
+                await client.post("/bookings", json=payload, headers=headers)
+            ).status_code == 200
+    finally:
+        app.dependency_overrides.clear()
+        app.dependency_overrides.update(previous)

@@ -47,3 +47,34 @@ docker exec constraint_postgres dropdb -U postgres constraintbs_test_bookings
 Без `TEST_DATABASE_NAME` PostgreSQL-тесты пропускаются. Конкурентный тест
 синхронизирует два HTTP-запроса после проверки доступности: оба видят свободный
 номер, затем один получает успешный ответ, другой — `409 booking_conflict`.
+
+### Автоматические проверки (GitHub Actions)
+
+Workflow `.github/workflows/ci.yml` запускается при push, pull request и вручную.
+Две независимые задачи:
+
+- **Ruff** — проверка Python-кода, включая тесты и миграции.
+- **Pytest + PostgreSQL** — PostgreSQL 17, миграции с нуля, откат последней
+  миграции и повторное применение, все unit/API/integration-тесты.
+
+Зависимости устанавливаются через `uv sync --locked --dev`. Настройки тестовой
+БД и отдельный тестовый JWT-ключ заданы в workflow; GitHub Secrets для этих
+проверок не нужны. JUnit-отчёт сохраняется как artifact `test-results`.
+В CI отсутствие `TEST_DATABASE_NAME` вызывает ошибку, а не пропуск integration-тестов.
+
+Локальный запуск без PostgreSQL и `.env`:
+
+```bash
+uv sync --locked --dev
+uv run ruff check .
+uv run pytest -q -m 'not integration'
+```
+
+Полный прогон с PostgreSQL описан выше. Тесты проверяют права доступа,
+аутентификацию, принадлежность бронирований, удобства, ошибки API и конкурентное
+бронирование. Создание броней одного номера сериализуется блокировкой строки
+номера до commit/rollback; exclusion constraint остаётся гарантией целостности.
+
+После отправки кода на GitHub проверяйте вкладку Actions. Чтобы запретить merge
+при ошибках, включите required status checks `Ruff` и `Pytest + PostgreSQL`
+в настройках защиты основной ветки. Автоматический деплой этим workflow не выполняется.

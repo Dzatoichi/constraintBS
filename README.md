@@ -31,3 +31,19 @@ Backend-сервис для бронирования гостиничных но
 - **Alembic** — миграции базы данных.
 
 В дальнейшем архитектура проекта предусматривает интеграцию LLM для преобразования пользовательских запросов на естественном языке в формализованные ограничения поиска и бронирования.
+
+### Проверка конкурентного бронирования
+
+Интеграционные тесты используют отдельную PostgreSQL и очищают её тестовые данные.
+Имя должно начинаться с `constraintbs_test_` и отличаться от основной БД.
+
+```bash
+docker exec constraint_postgres createdb -U postgres constraintbs_test_bookings
+DB_NAME=constraintbs_test_bookings uv run alembic upgrade head
+TEST_DATABASE_NAME=constraintbs_test_bookings uv run pytest -q
+docker exec constraint_postgres dropdb -U postgres constraintbs_test_bookings
+```
+
+Без `TEST_DATABASE_NAME` PostgreSQL-тесты пропускаются. Конкурентный тест
+синхронизирует два HTTP-запроса после проверки доступности: оба видят свободный
+номер, затем один получает успешный ответ, другой — `409 booking_conflict`.

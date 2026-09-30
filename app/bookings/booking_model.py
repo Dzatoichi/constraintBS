@@ -2,7 +2,18 @@ import enum
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Date, DateTime, Enum, ForeignKey, Integer, String, func
+from sqlalchemy import (
+    CheckConstraint,
+    Date,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    func,
+    text,
+)
+from sqlalchemy.dialects.postgresql import ExcludeConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.shared.database import Base
@@ -26,8 +37,12 @@ class Booking(Base):
     guest_name: Mapped[str] = mapped_column(String(100), nullable=False)
     guest_email: Mapped[str] = mapped_column(String(255), nullable=False)
     total_price: Mapped[int] = mapped_column(Integer, nullable=False)
-    status: Mapped[BookingStatus] = mapped_column(Enum(BookingStatus), default=BookingStatus.CONFIRMED, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
+    status: Mapped[BookingStatus] = mapped_column(
+        Enum(BookingStatus), default=BookingStatus.CONFIRMED, nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now()
+    )
 
     room_id: Mapped[int] = mapped_column(Integer, ForeignKey("rooms.id"))
     user_id: Mapped[int | None] = mapped_column(
@@ -38,3 +53,21 @@ class Booking(Base):
     )
 
     user: Mapped["User | None"] = relationship("User", back_populates="bookings")
+
+    __table_args__ = (
+        CheckConstraint(
+            "check_out > check_in",
+            name="ck_bookings_dates",
+        ),
+        CheckConstraint(
+            "guests > 0",
+            name="ck_bookings_guests",
+        ),
+        ExcludeConstraint(
+            ("room_id", "="),
+            (func.daterange(check_in, check_out, "[)"), "&&"),
+            where=text("status = 'CONFIRMED'"),
+            using="gist",
+            name="bookings_no_overlap",
+        ),
+    )

@@ -1,10 +1,10 @@
 from unittest.mock import AsyncMock, Mock
 
 import pytest
-from fastapi import HTTPException
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.hotels.rooms.errors import UnknownAmenities
 from app.hotels.rooms.rooms_model import Amenity
 from app.hotels.rooms.rooms_repository import RoomRepository
 from app.hotels.rooms.rooms_schemas import RoomCreate, RoomRead
@@ -55,13 +55,12 @@ async def test_unknown_amenities_do_not_create_room():
     )
     service = RoomsService(RoomRepository())
 
-    with pytest.raises(HTTPException) as error:
+    with pytest.raises(UnknownAmenities) as error:
         await service.create_room(
             session=session, hotel_id=10, data=room_data(amenity_ids=[1, 99])
         )
 
-    assert error.value.status_code == 422
-    assert error.value.detail["amenity_ids"] == [99]
+    assert error.value.amenity_ids == [99]
     session.add.assert_not_called()
     session.flush.assert_not_awaited()
     session.commit.assert_not_awaited()

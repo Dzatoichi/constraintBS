@@ -9,6 +9,7 @@ from app.auth.dependencies import CurrentAccessTokenDep, CurrentUserDep
 from app.auth.security import create_access_token, create_refresh_token, decode_token
 from app.shared.dependecies import AsyncSessionDep
 from app.users.dependencies import UsersServiceDep
+from app.users.errors import UserNotFound
 from app.users.users_schemas import UserRead
 
 auth_router = APIRouter(prefix="/auth", tags=["Аутентификация"])
@@ -69,7 +70,7 @@ async def refresh(
         ) from None
     try:
         user = await users_service.get_user(session=session, user_id=user_id)
-    except HTTPException:
+    except UserNotFound:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate refresh token",

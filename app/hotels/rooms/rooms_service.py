@@ -1,8 +1,8 @@
 from datetime import date
 
-from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.hotels.rooms.errors import InvalidSearchDates, RoomNotFound, UnknownAmenities
 from app.hotels.rooms.rooms_model import Room, RoomType
 from app.hotels.rooms.rooms_repository import RoomRepository
 from app.hotels.rooms.rooms_schemas import RoomCreate, RoomUpdate
@@ -27,13 +27,7 @@ class RoomsService:
         )
         missing_ids = set(data.amenity_ids) - {amenity.id for amenity in amenities}
         if missing_ids:
-            raise HTTPException(
-                status_code=422,
-                detail={
-                    "message": "Unknown amenity IDs",
-                    "amenity_ids": sorted(missing_ids),
-                },
-            )
+            raise UnknownAmenities(sorted(missing_ids))
 
         room = await self.rooms_repository.create(
             session=session,
@@ -60,10 +54,7 @@ class RoomsService:
             hotel_id=hotel_id,
         )
 
-        if rooms is None:
-            raise ValueError("Not found")
-
-        return rooms
+        return rooms or []
 
 
     async def get_room(
@@ -80,7 +71,7 @@ class RoomsService:
         )
 
         if room is None:
-            raise ValueError("Room not found")
+            raise RoomNotFound()
 
         return room
 
@@ -99,7 +90,7 @@ class RoomsService:
         )
 
         if room is None:
-            raise ValueError("Room not found")
+            raise RoomNotFound()
 
         result = await self.rooms_repository.delete(
             session=session,
@@ -125,9 +116,9 @@ class RoomsService:
         )
 
         if room is None:
-            raise ValueError("Room not found")
+            raise RoomNotFound()
 
-        upd_payload = data.model_dump()
+        upd_payload = data.model_dump(exclude_none=True)
 
         updated_room = await self.rooms_repository.update(
             update_payload=upd_payload,
@@ -155,7 +146,7 @@ class RoomsService:
         Поиск номеров по параметрам
         """
         if check_in >= check_out:
-            raise ValueError("check_in must be before check_out")
+            raise InvalidSearchDates()
 
         rooms = await self.rooms_repository.search_rooms(
             session=session,
@@ -168,10 +159,7 @@ class RoomsService:
             amenities=amenities,
         )
 
-        if rooms is None:
-            raise ValueError("Not found")
-
-        return rooms
+        return rooms or []
 
 
         

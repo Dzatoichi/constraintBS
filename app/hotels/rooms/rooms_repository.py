@@ -104,7 +104,7 @@ class RoomRepository(BaseRepository[
         if amenities:
             for amenity in amenities:
                 stmt = stmt.where(
-                    Room.amenities.contains([amenity])
+                    Room.amenities.any(Amenity.id == amenity)
                 )
 
         booking_exists = (

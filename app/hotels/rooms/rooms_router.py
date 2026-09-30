@@ -28,41 +28,41 @@ async def search_rooms(
     session: AsyncSessionDep,
     rooms_service: RoomServiceDep,
     city: Annotated[
-        str, 
+        str,
         Query(
-            description="Город, в котором нужен номер", 
-            max_lenght=20
+            description="Город, в котором нужен номер",
+            max_length=30
             )],
     check_in: Annotated[
-        date, 
+        date,
         Query(
             description="Дата заселения YYYY-MM-DD"
             )],
     check_out: Annotated[
-        date, 
+        date,
         Query(
             description="Дата выселения YYYY-MM-DD"
             )],
     guests: Annotated[
-        int, 
-        Query(
-            description="Кол-во гостей"
-            )],
-    max_price: Annotated[
         int,
         Query(
-            description="Максимальная стоимость номера в сутки"
-            )] | None = None,
+            description="Кол-во гостей", gt=0
+            )],
+    max_price: Annotated[
+        int | None,
+        Query(
+            description="Максимальная стоимость номера в сутки", ge=0
+            )] = None,
     room_type: Annotated[
-        RoomType, 
+        RoomType | None,
         Query(
             description="Тип номера"
-            )] | None = RoomType.STANDART,
+            )] = RoomType.STANDART,
     amenities: Annotated[
-        list[int], 
+        list[int] | None,
         Query(
             description="Список id удобств, включенных в номер"
-            )] | None = None,
+            )] = None,
 ) -> list[RoomRead] | None:
     """
     Поиск номеров по параметрам
@@ -127,7 +127,7 @@ async def get_rooms_for_hotel(
 
     if rooms is not None:
         return [
-            RoomRead.model_validate(room) 
+            RoomRead.model_validate(room)
             for room in rooms
             ]
 
@@ -139,7 +139,7 @@ async def get_rooms_for_hotel(
 )
 async def get_room_by_id(
     room_id: int,
-    session: AsyncSessionDep, 
+    session: AsyncSessionDep,
     rooms_service: RoomServiceDep,
 ) -> RoomRead:
     """
@@ -185,7 +185,7 @@ async def update_room(
 )
 async def delete_room(
     room_id: int,
-    session: AsyncSessionDep, 
+    session: AsyncSessionDep,
     rooms_service: RoomServiceDep,
     _: AdminUserDep,
 ) -> None:

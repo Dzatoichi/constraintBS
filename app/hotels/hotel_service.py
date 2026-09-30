@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.hotels.errors import HotelNotFound
 from app.hotels.hotel_model import Hotel
 from app.hotels.hotel_repository import HotelRepository
 from app.hotels.hotel_schemas import HotelCreate, HotelUpdate
@@ -54,8 +55,7 @@ class HotelService:
               obj_id = hotel_id,
          )
          if hotel is None:
-            # здесь позже своё domain exception
-            raise ValueError("Hotel not found")
+            raise HotelNotFound()
 
          return hotel
 
@@ -74,7 +74,7 @@ class HotelService:
         )
 
          if hotel is None:
-            raise ValueError("Hotel not found")
+            raise HotelNotFound()
 
          update_payload = data.model_dump()
 
@@ -102,7 +102,7 @@ class HotelService:
         )
 
         if del_hotel is None:
-            raise ValueError("Hotel not found")
+            raise HotelNotFound()
 
         result = await self.hotel_repository.delete(
             obj=del_hotel,

@@ -1,8 +1,8 @@
-from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.security import get_password_hash, verify_password
 from app.bookings.booking_model import Booking
+from app.users.errors import EmailAlreadyExists, UsernameAlreadyExists, UserNotFound
 from app.users.users_model import User
 from app.users.users_repository import UsersRepository
 from app.users.users_schemas import UserCreate, UserUpdate
@@ -35,10 +35,7 @@ class UsersService:
     async def get_user(self, session: AsyncSession, user_id: int) -> User:
         user = await self.users_repository.get_by_id(session=session, obj_id=user_id)
         if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found",
-            )
+            raise UserNotFound()
         return user
 
     async def get_users(self, session: AsyncSession) -> list[User]:
@@ -110,10 +107,7 @@ class UsersService:
 
     async def _ensure_email_is_available(self, session: AsyncSession, email: str) -> None:
         if await self.users_repository.get_by_email(session=session, email=email):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="A user with this email already exists",
-            )
+            raise EmailAlreadyExists()
 
     async def _ensure_username_is_available(
         self,
@@ -121,7 +115,4 @@ class UsersService:
         username: str,
     ) -> None:
         if await self.users_repository.get_by_username(session=session, username=username):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="A user with this username already exists",
-            )
+            raise UsernameAlreadyExists()

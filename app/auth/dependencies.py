@@ -8,6 +8,7 @@ from app.auth.auth_schemas import AccessTokenPayload
 from app.auth.security import decode_token
 from app.shared.dependecies import AsyncSessionDep
 from app.users.dependencies import UsersServiceDep
+from app.users.errors import UserNotFound
 from app.users.users_model import User
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -49,10 +50,8 @@ async def get_current_user(
             session=session,
             user_id=access_token.user_id,
         )
-    except HTTPException as error:
-        if error.status_code == status.HTTP_404_NOT_FOUND:
-            raise credentials_exception from None
-        raise
+    except UserNotFound:
+        raise credentials_exception from None
 
     if not user.is_active:
         raise HTTPException(

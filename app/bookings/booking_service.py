@@ -1,9 +1,10 @@
-from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bookings.booking_model import Booking
 from app.bookings.booking_repository import BookingRepository
 from app.bookings.booking_schemas import BookingCreate
+from app.bookings.errors import BookingConflict, BookingNotFound, InvalidBookingDates
+from app.hotels.rooms.errors import RoomCapacityExceeded, RoomNotFound
 from app.users.users_model import User
 
 
@@ -24,21 +25,21 @@ class BookingService:
         """
         Создание бронирования
         """
-        await self.booking_repository.validate_booking(
-               session=session,
-               room_id=data.room_id,
-               check_in=data.check_in,
-               check_out=data.check_out,
-               guests=data.guests,
-               )
+        if data.check_out <= data.check_in:
+            raise InvalidBookingDates()
 
-        total_price = await self.booking_repository.calculate_total_price(
-               session=session,
-               room_id=data.room_id,
-               check_in=data.check_in,
-               check_out=data.check_out,
-               )
-               
+        room = await self.booking_repository.get_room(session, data.room_id)
+        if room is None:
+            raise RoomNotFound()
+        if data.guests > room.capacity:
+            raise RoomCapacityExceeded()
+        if await self.booking_repository.has_conflict(
+            session, data.room_id, data.check_in, data.check_out,
+        ):
+            raise BookingConflict()
+
+        total_price = room.price_per_night * (data.check_out - data.check_in).days
+
         payload = data.model_dump()
 
         payload["total_price"] = total_price
@@ -71,10 +72,7 @@ class BookingService:
             )
 
             if booking is None:
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail="Booking not found",
-                    )
+                    raise BookingNotFound()
 
             return booking
 
@@ -107,10 +105,7 @@ class BookingService:
                 )
     
                 if booking is None:
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail="Booking not found",
-                    )
+                    raise BookingNotFound()
 
                 cancel_booking = await self.booking_repository.cancel_booking(
                        booking=booking,

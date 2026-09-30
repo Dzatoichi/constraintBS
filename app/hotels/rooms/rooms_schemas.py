@@ -19,10 +19,10 @@ class AmentityRead(AmentityCreate):
 
 
 class RoomBase(BaseModel):
-    number: str
+    number: str = Field(min_length=1, max_length=10)
     room_type: RoomType = Field(default=RoomType.STANDART)
-    capacity: int
-    price_per_night: int
+    capacity: int = Field(gt=0)
+    price_per_night: int = Field(ge=0)
     floor: int
     description: str | None = Field(default=None, max_length=500)
 
@@ -40,13 +40,13 @@ class RoomRead(RoomBase):
 
 
 class RoomUpdate(BaseModel):
-    number: int | None 
+    number: str | None =  None
     room_type: RoomType | None = Field(default=RoomType.STANDART)
-    capacity: int | None
-    price_per_night: int | None
-    floor: int | None
+    capacity: int | None = None
+    price_per_night: int | None = None
+    floor: int | None = None
     description: str | None = Field(default=None, max_length=500)
-    amenities: list[int] | None
+    amenities: list[int] | None = None
 
 
 class RoomUpdateRead(RoomUpdate):
